@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "SDL2",
+            "command": "g++.exe",
+            "args": [
+                "-g",
+                "*.cpp",
+                "-o",
+                "build\\game.exe",
+                "-IC:\\SDL2-2.0.14\\x86_64-w64-mingw32\\include",
+                "-LC:\\SDL2-2.0.14\\x86_64-w64-mingw32\\lib",
+                "-lmingw32",
+                "-lSDL2main",
+                "-lSDL2",
+                "-mwindows",
+                "-mconsole"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
