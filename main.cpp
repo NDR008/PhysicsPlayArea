@@ -53,35 +53,41 @@ int main(int argv, char** args)
         {
             switch (event.type)
             {
-            case SDL_QUIT:
-                isRunning = false;
-                break;
-
-            case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                {
+                case SDL_QUIT:
                     isRunning = false;
-                }
-                if (event.key.keysym.sym == SDLK_DOWN)
-                {
-                    g = 9.81;
-                }
-                if (event.key.keysym.sym == SDLK_UP)
-                {
-                    g = 9.81;
-                }
+                    break;
+
+                case SDL_KEYDOWN:
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                    {
+                        isRunning = false;
+                    }
+                    if (event.key.keysym.sym == SDLK_DOWN)
+                    {
+                        g = 9.8/1000;
+                    }
+                    if (event.key.keysym.sym == SDLK_UP)
+                    {
+                        g = -9.8/1000;
+                    }
             }
+        }
+        if (object1.r.y > 600){
+                object1.pos_y = 0;
+        }
+        if (object1.r.y < 0){
+                object1.pos_y = 600;
         }
 
         // physics round
         mainClock.tick();
-        SDL_Delay(50);
+        SDL_Delay(2000);
         float old_pos = object1.r.y;
         object1.pos_y = object1.pos_y + object1.v_y * mainClock.delta + (0.5f * g * mainClock.delta * mainClock.delta)/(1000.0f*1000.0f);
         object1.v_y = (object1.pos_y - old_pos)/mainClock.delta;
         object1.r.y = object1.pos_y;
 
-        std::cout << "time :" << (mainClock.delta)/1000.0f << " y.p " << object1.r.y << " y.logic " << object1.pos_y << " u " << object1.v_y << std::endl;
+        std::cout << "g " << g << " time :" << (mainClock.delta)/1000.0f << " y.p " << object1.r.y << " y.logic " << object1.pos_y << " u " << object1.v_y << std::endl;
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         SDL_RenderClear(renderer);
         
