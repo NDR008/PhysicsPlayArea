@@ -1,8 +1,14 @@
+// WARNING ULTRA DIRTY CODE - just my experimental playground
+// playing around to revive my memory into basic linear physics implementation in code
+// simple cube that accelerates by a "engine accel force"
+// and that decelerates by air resistance
+// while figuring out c++ in parallel
+
 #include <iostream>
+#include <algorithm>
 #include <math.h>
 #include <SDL2/SDL.h>
 
-// just trying to create a body to give physics to
 struct RigidBody
 {
     SDL_Rect r = {
@@ -14,18 +20,21 @@ struct RigidBody
     float pos_y = 20;
     float mass;
     float v_y=0;
-    /* data */
+    float a_y;
+    float eng_y;
 };
 
 struct Clock
 {
     uint32_t last_tick_time = 0;
     uint32_t delta = 0;
+    float dT;
 
     void tick()
     {
         uint32_t tick_time = SDL_GetTicks();
         delta = tick_time - last_tick_time;
+        dT = (float)delta/1000.0f;
         last_tick_time = tick_time;
     }
 };
@@ -44,54 +53,54 @@ int main(int argv, char** args)
 
     RigidBody object1;
     object1.mass = 50.0f;
+    int accel = 200;
     float g = 0;
+    float time = 0;
     Clock mainClock;
-    while (isRunning)
-    {         
-        
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-                case SDL_QUIT:
-                    isRunning = false;
-                    break;
+    while (isRunning) {         
+        while( SDL_PollEvent( &event ) ){
+            /* We are only worried about SDL_KEYDOWN and SDL_KEYUP events */
+            switch( event.type ){
+            case SDL_KEYDOWN:
+                object1.eng_y+= 150.0f;
+                accel = 200;
+                printf( "Key press detected\n" );
+                break;
 
-                case SDL_KEYDOWN:
-                    if (event.key.keysym.sym == SDLK_ESCAPE)
-                    {
-                        isRunning = false;
-                    }
-                    if (event.key.keysym.sym == SDLK_DOWN)
-                    {
-                        g = 9.8/1000;
-                    }
-                    if (event.key.keysym.sym == SDLK_UP)
-                    {
-                        g = -9.8/1000;
-                    }
+            case SDL_KEYUP:
+                object1.eng_y = 0;
+                accel = 0;
+                printf( "Key release detected\n" );
+                break;
+
+            default:
+                break;
             }
-        }
-        if (object1.r.y > 600){
-                object1.pos_y = 0;
-        }
-        if (object1.r.y < 0){
-                object1.pos_y = 600;
         }
 
         // physics round
         mainClock.tick();
-        SDL_Delay(2000);
-        float old_pos = object1.r.y;
-        object1.pos_y = object1.pos_y + object1.v_y * mainClock.delta + (0.5f * g * mainClock.delta * mainClock.delta)/(1000.0f*1000.0f);
-        object1.v_y = (object1.pos_y - old_pos)/mainClock.delta;
-        object1.r.y = object1.pos_y;
+        SDL_Delay(50);
 
-        std::cout << "g " << g << " time :" << (mainClock.delta)/1000.0f << " y.p " << object1.r.y << " y.logic " << object1.pos_y << " u " << object1.v_y << std::endl;
+        // natural deceleration  should be due to friction + air resistance
+        // friction & air-resistance is proportional to downforce. Downforce is proportional to speed square
+        float resistance = 0.05f * object1.v_y * object1.v_y;
+        object1.a_y = (object1.eng_y-resistance);
+        object1.v_y += object1.a_y * mainClock.dT;
+
+        object1.pos_y += object1.v_y * mainClock.dT;
+        object1.r.y = object1.pos_y;
+        std:: cout << object1.v_y << "\t" << object1.a_y << "\t" << object1.eng_y << "\t" << resistance << std::endl;
+
+        time = time + mainClock.dT;
+
+        if (object1.r.y > 600-20){
+            break;
+        }
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         SDL_RenderClear(renderer);
         
-        SDL_SetRenderDrawColor( renderer, 0, 0, 255, 255 );
+        SDL_SetRenderDrawColor( renderer, 0, 0, accel, 255 );
         SDL_RenderFillRect( renderer, &object1.r );
         SDL_RenderPresent(renderer);
     }
