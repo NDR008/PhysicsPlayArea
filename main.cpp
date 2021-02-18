@@ -45,7 +45,7 @@ int main(int argv, char** args)
     SDL_Init(SDL_INIT_EVERYTHING);
 
 
-    SDL_Window *window = SDL_CreateWindow("wing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    SDL_Window *window = SDL_CreateWindow("Air resistance", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
 
     bool isRunning = true;
@@ -116,7 +116,7 @@ int main(int argv, char** args)
         object1.r.y = object1.pos_y;
 
 
-
+`
         std:: cout << (int)object1.v_y << " m/s \t" << (int)object1.a_y << " accel \t" << (int)object1.eng_y << " eng \t" << (int)resistance << " wind" << std::endl;
 
         time = time + mainClock.dT;
