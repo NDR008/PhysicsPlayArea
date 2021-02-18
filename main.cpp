@@ -116,7 +116,6 @@ int main(int argv, char** args)
         object1.r.y = object1.pos_y;
 
 
-`
         std:: cout << (int)object1.v_y << " m/s \t" << (int)object1.a_y << " accel \t" << (int)object1.eng_y << " eng \t" << (int)resistance << " wind" << std::endl;
 
         time = time + mainClock.dT;
