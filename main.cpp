@@ -27,12 +27,13 @@ struct RigidBody
 struct Clock
 {
     uint32_t last_tick_time = 0;
+    uint32_t tick_time = 0;
     uint32_t delta = 0;
     float dT;
 
     void tick()
     {
-        uint32_t tick_time = SDL_GetTicks();
+        tick_time = SDL_GetTicks();
         delta = tick_time - last_tick_time;
         dT = (float)delta/1000.0f;
         last_tick_time = tick_time;
@@ -56,8 +57,10 @@ int main(int argv, char** args)
     int accel = 0;
     float time = 0;
     Clock mainClock;
+    const float accel_rate = 100.0f; // rate of acceleration per second
+    const float max_power = 300.0f; // saturating power
+    const float drag = 0.02f; // a fake drag factor
     while (isRunning) {    
-
         const Uint8 *keyState = SDL_GetKeyboardState(NULL);
         while( SDL_PollEvent( &event ) ){
             if (event.type == SDL_QUIT) {
@@ -66,16 +69,15 @@ int main(int argv, char** args)
         }
 
         if (keyState[SDL_SCANCODE_DOWN]){
-            object1.eng_y+= 50.0f*mainClock.dT;
-            object1.eng_y = std::min(object1.eng_y, 100.0f);
+            object1.eng_y+= accel_rate *mainClock.dT;
+            object1.eng_y = std::min(object1.eng_y, max_power);
         }
         else if (keyState[SDL_SCANCODE_UP]){
-            object1.eng_y -= 50.0f*mainClock.dT;
-            object1.eng_y = std::max(object1.eng_y, -100.0f);
+            object1.eng_y -= accel_rate *mainClock.dT;
+            object1.eng_y = std::max(object1.eng_y, -max_power);
         }
-        else {
-            object1.eng_y = object1.eng_y*0.05f*mainClock.dT;
-            object1.eng_y = std::max(object1.eng_y, 0.0f);
+        else{
+            object1.eng_y = object1.eng_y * (1 - 0.9f)* mainClock.dT;
         }
 
         // physics round
@@ -87,6 +89,19 @@ int main(int argv, char** args)
         // since resistance is a func of speed
         // probably should calculate resistance after calculating new speed....
 
+        if (object1.r.y > 600-20){
+            object1.pos_y = 600-20;
+            object1.r.y = object1.pos_y;
+            object1.a_y = 0;
+            object1.v_y = 0;
+        }
+
+        if (object1.r.y < 0){
+            object1.pos_y = 0.0f;
+            object1.r.y = object1.pos_y;
+            object1.a_y = 0;
+            object1.v_y = 0;
+        }
         
         object1.a_y = (object1.eng_y-resistance);
         object1.v_y += object1.a_y * mainClock.dT;
@@ -94,23 +109,15 @@ int main(int argv, char** args)
         if (object1.v_y < 0){
             factor = -1;
         }
-        resistance = factor * (0.05f * object1.v_y * object1.v_y); 
+        resistance = factor * (drag * object1.v_y * object1.v_y); 
         accel = 150+factor*50;
 
         object1.pos_y += object1.v_y * mainClock.dT;
         object1.r.y = object1.pos_y;
 
-        if (object1.r.y > 600-20){
-            object1.pos_y = 600-20;
-            object1.r.y = object1.pos_y;
-        }
 
-        if (object1.r.y < 0){
-            object1.pos_y = 0.0f;
-            object1.r.y = object1.pos_y;
-        }
 
-        std:: cout << (int)object1.v_y << "m/s \t" << (int)object1.a_y << "accel \t" << (int)object1.eng_y << "eng \t" << (int)resistance << "wind" << std::endl;
+        std:: cout << (int)object1.v_y << " m/s \t" << (int)object1.a_y << " accel \t" << (int)object1.eng_y << " eng \t" << (int)resistance << " wind" << std::endl;
 
         time = time + mainClock.dT;
 
