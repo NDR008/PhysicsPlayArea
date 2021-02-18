@@ -49,54 +49,72 @@ int main(int argv, char** args)
 
     bool isRunning = true;
     SDL_Event event;
-    
+    float resistance = 0.0f;
 
     RigidBody object1;
     object1.mass = 50.0f;
-    int accel = 200;
-    float g = 0;
+    int accel = 0;
     float time = 0;
     Clock mainClock;
-    while (isRunning) {         
+    while (isRunning) {    
+
+        const Uint8 *keyState = SDL_GetKeyboardState(NULL);
         while( SDL_PollEvent( &event ) ){
-            /* We are only worried about SDL_KEYDOWN and SDL_KEYUP events */
-            switch( event.type ){
-            case SDL_KEYDOWN:
-                object1.eng_y+= 150.0f;
-                accel = 200;
-                printf( "Key press detected\n" );
-                break;
-
-            case SDL_KEYUP:
-                object1.eng_y = 0;
-                accel = 0;
-                printf( "Key release detected\n" );
-                break;
-
-            default:
-                break;
+            if (event.type == SDL_QUIT) {
+                isRunning = false;
             }
+        }
+
+        if (keyState[SDL_SCANCODE_DOWN]){
+            object1.eng_y+= 50.0f*mainClock.dT;
+            object1.eng_y = std::min(object1.eng_y, 100.0f);
+        }
+        else if (keyState[SDL_SCANCODE_UP]){
+            object1.eng_y -= 50.0f*mainClock.dT;
+            object1.eng_y = std::max(object1.eng_y, -100.0f);
+        }
+        else {
+            object1.eng_y = object1.eng_y*0.05f*mainClock.dT;
+            object1.eng_y = std::max(object1.eng_y, 0.0f);
         }
 
         // physics round
         mainClock.tick();
-        SDL_Delay(50);
+        //SDL_Delay(50); // to test if the dT works... large delays cause physics issues
 
         // natural deceleration  should be due to friction + air resistance
         // friction & air-resistance is proportional to downforce. Downforce is proportional to speed square
-        float resistance = 0.05f * object1.v_y * object1.v_y;
+        // since resistance is a func of speed
+        // probably should calculate resistance after calculating new speed....
+
+        
         object1.a_y = (object1.eng_y-resistance);
         object1.v_y += object1.a_y * mainClock.dT;
+        int factor = 1;
+        if (object1.v_y < 0){
+            factor = -1;
+        }
+        resistance = factor * (0.05f * object1.v_y * object1.v_y); 
+        accel = 150+factor*50;
 
         object1.pos_y += object1.v_y * mainClock.dT;
         object1.r.y = object1.pos_y;
-        std:: cout << object1.v_y << "\t" << object1.a_y << "\t" << object1.eng_y << "\t" << resistance << std::endl;
+
+        if (object1.r.y > 600-20){
+            object1.pos_y = 600-20;
+            object1.r.y = object1.pos_y;
+        }
+
+        if (object1.r.y < 0){
+            object1.pos_y = 0.0f;
+            object1.r.y = object1.pos_y;
+        }
+
+        std:: cout << (int)object1.v_y << "m/s \t" << (int)object1.a_y << "accel \t" << (int)object1.eng_y << "eng \t" << (int)resistance << "wind" << std::endl;
 
         time = time + mainClock.dT;
 
-        if (object1.r.y > 600-20){
-            break;
-        }
+
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         SDL_RenderClear(renderer);
         
